@@ -219,7 +219,7 @@ def worker_batch(url_list, result_queue):
 
 result_queue = Queue()
 NUM_WORKERS = 5
-all_urls = list(companies_dict.keys())[3000:5800]
+all_urls = list(companies_dict.keys())[3000:5000]
 backup_companies_dict = companies_dict
 chunk_size = len(all_urls) // NUM_WORKERS + 1
 url_chunks = [all_urls[i:i + chunk_size] for i in range(0, len(all_urls), chunk_size)]
