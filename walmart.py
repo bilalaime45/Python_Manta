@@ -17,9 +17,26 @@ headers = {
     "Upgrade-Insecure-Requests": "1",
 }
 r = requests.get(url, headers=headers, timeout=10)
-def req_url(url):
-    r = requests.get(url, headers=headers, timeout=10)
-    return r
+    
+def fetch_with_retry(url, headers, max_retries=3, delay=5):
+    for attempt in range(1, max_retries + 1):
+        try:
+            r = requests.get(url, headers=headers, timeout=10)
+            return r
+        except requests.exceptions.ConnectionError as e:
+            print(f"Attempt {attempt}/{max_retries} failed: {e}")
+            if attempt < max_retries:
+                print(f"Retrying in {delay} seconds...")
+                time.sleep(delay)
+            else:
+                print("Max retries reached. Giving up.")
+                return None
+        except requests.exceptions.Timeout:
+            print(f"Attempt {attempt}/{max_retries} timed out")
+            if attempt < max_retries:
+                time.sleep(delay)
+            else:
+                return None
 
 match = re.search(
     r'<script[^>]*id="__NEXT_DATA__"[^>]*>(.*?)</script>',
@@ -98,7 +115,12 @@ print(f"Found {len(results2)} brand/canonicalUrl pairs\n")
 for r in results2:
     print("Processsing url:", "https://www.walmart.com"+r['canonicalUrl'])
     time.sleep(2)
-    page_html=req_url("https://www.walmart.com"+r['canonicalUrl'])
-    price_features_specs(page_html)
+    page_html=fetch_with_retry("https://www.walmart.com"+r['canonicalUrl'],headers)
+    if page_html is not None:
+        print("Success:", page_html.status_code)
+        price_features_specs(page_html)
+    else:
+        print("Failed to fetch after retries")
+    
     
  
